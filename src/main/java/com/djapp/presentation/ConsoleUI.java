@@ -9,7 +9,10 @@ import com.djapp.data.SetDAO;
 import com.djapp.data.SetTrackDAO;
 import com.djapp.models.Set;
 import com.djapp.models.SetTrack;
+import com.djapp.external.M3UExporter;
+import com.djapp.utils.ConfigLoader;
 
+import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
 import java.util.List;
@@ -421,7 +424,8 @@ public class ConsoleUI {
                 System.out.println("3. Move Track Up");
                 System.out.println("4. Move Track Down");
                 System.out.println("5. Delete This Set");
-                System.out.println("6. Back to Main Menu");
+                System.out.println("6. Export to M3U8");
+                System.out.println("7. Back to Main Menu");
                 
                 int choice = readInt("Choice: ");
                 
@@ -435,7 +439,8 @@ public class ConsoleUI {
                             managing = false; // exit back to main menu
                         }
                         break;
-                    case 6: managing = false; break;
+                    case 6: exportSetToM3U8(setId); break;
+                    case 7: managing = false; break;
                     default: System.out.println("❌ Invalid choice.");
                 }
                 
@@ -448,7 +453,7 @@ public class ConsoleUI {
 
     // --- HELPERS ---
 
-            // --- ADD TRACK TO SET ---
+    // --- ADD TRACK TO SET ---
     private void addTrackToSet(int setId) throws SQLException {
         System.out.println("\n🔍 Search library:");
         String query = readString("Search (title/artist): ");
@@ -549,7 +554,7 @@ public class ConsoleUI {
         System.out.println("✅ Moved.");
     }
 
-        private boolean deleteSet(int setId) throws SQLException {
+    private boolean deleteSet(int setId) throws SQLException {
         Set set = setDAO.getById(setId);
         if (set == null) {
             System.out.println("❌ Set not found.");
@@ -569,6 +574,35 @@ public class ConsoleUI {
         } else {
             System.out.println("❌ Could not delete set.");
             return false;
+        }
+    }
+
+    private void exportSetToM3U8(int setId) throws SQLException {
+        Set set = setDAO.getById(setId);
+        List<SetTrack> setTracks = setTrackDAO.getBySetId(setId);
+
+        if (setTracks.isEmpty()) {
+            System.out.println("😕 Set is empty. Nothing to export.");
+            return;
+        }
+
+        // Default path: music library folder
+        String musicPath = ConfigLoader.get("music.library.path", "");
+        String defaultPath = musicPath + "\\" + set.getName() + ".m3u8";
+        
+        System.out.println("\n📤 Export Set: " + set.getName());
+        System.out.println("   Tracks: " + setTracks.size());
+        System.out.println("   Default path: " + defaultPath);
+        
+        String filePath = readString("Export path (or Enter for default): ");
+        if (filePath.isEmpty()) filePath = defaultPath;
+
+        try {
+            M3UExporter exporter = new M3UExporter();
+            exporter.export(setTracks, filePath);
+            System.out.println("✅ Exported " + setTracks.size() + " tracks to: " + filePath);
+        } catch (IOException e) {
+            System.err.println("❌ Export failed: " + e.getMessage());
         }
     }
 
