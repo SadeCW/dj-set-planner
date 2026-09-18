@@ -1,0 +1,5 @@
+db.url=jdbc:mysql://localhost:3306/dj_set_planner
+db.user=your_username
+db.password=your_password
+music.library.path=path/to/your/music
+rekordbox.xml.path=path/to/rekordbox.xml

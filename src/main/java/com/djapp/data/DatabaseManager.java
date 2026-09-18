@@ -3,17 +3,25 @@ package com.djapp.data;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import com.djapp.utils.ConfigLoader;
+
 
 public class DatabaseManager {
-    private static final String URL = "jdbc:mysql://localhost:3306/dj_set_planner";
-    private static final String USER = "root";
-    private static final String PASSWORD = "Rockets1218!";
-
     private Connection connection;
+    private String url;
+    private String user;
+    private String password;
+
+    public DatabaseManager() {
+        this.url = ConfigLoader.get("db.url");
+        this.user = ConfigLoader.get("db.user");
+        this.password = ConfigLoader.get("db.password");
+    }
+
 
     public Connection connect() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
+            connection = DriverManager.getConnection(url, user, password);
             System.out.println("✅ Connected to MySQL!");
         }
         return connection;
