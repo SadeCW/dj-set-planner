@@ -14,15 +14,15 @@ import com.djapp.utils.ConfigLoader;
 
 public class DJApp {
     public static void main(String[] args) {
-        try {
-            DatabaseManager db = new DatabaseManager();
-            db.connect();
-            System.out.println("✅ App is running!");
-            db.disconnect();
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-            e.printStackTrace();
-        }
+        // try {
+        //     DatabaseManager db = new DatabaseManager();
+        //     db.connect();
+        //     System.out.println("✅ App is running!");
+        //     db.disconnect();
+        // } catch (Exception e) {
+        //     System.err.println("❌ Error: " + e.getMessage());
+        //     e.printStackTrace();
+        // }
 
     //     String musicPath = ConfigLoader.get("music.library.path");
 

@@ -79,7 +79,7 @@ public class TrackDAO {
         }
         return tracks;
     }
-    
+
     // Search by artist
     public List<Track> searchByArtist(String query) throws SQLException {
     List<Track> tracks = new ArrayList<>();
@@ -116,6 +116,52 @@ public class TrackDAO {
         }
         return tracks;
     }
+
+    // Search by key (exact match, e.g. "4A")
+    public List<Track> searchByKey(String key) throws SQLException {
+        List<Track> tracks = new ArrayList<>();
+        String sql = "SELECT * FROM tracks WHERE `key` = ? ORDER BY bpm";
+        
+        try (Connection conn = dbManager.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setString(1, key);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    tracks.add(mapResultSetToTrack(rs));
+                }
+            }
+        }
+        return tracks;
+    }
+    // Get all distinct keys in the library
+    public List<String> getAllKeys() throws SQLException {
+        List<String> keys = new ArrayList<>();
+        String sql = "SELECT DISTINCT `key` FROM tracks WHERE `key` IS NOT NULL ORDER BY `key`";
+        
+        try (Connection conn = dbManager.connect();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                keys.add(rs.getString("key"));
+            }
+        }
+        return keys;
+    }
+
+    // Delete a track by ID
+    public boolean delete(int trackId) throws SQLException {
+        String sql = "DELETE FROM tracks WHERE id = ?";
+        
+        try (Connection conn = dbManager.connect();
+            PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
+            stmt.setInt(1, trackId);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        }
+    }
+
 
     // Helper method to convert ResultSet to Track object
     private Track mapResultSetToTrack(ResultSet rs) throws SQLException {
