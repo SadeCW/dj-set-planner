@@ -79,6 +79,24 @@ public class TrackDAO {
         }
         return tracks;
     }
+    
+    // Search by artist
+    public List<Track> searchByArtist(String query) throws SQLException {
+    List<Track> tracks = new ArrayList<>();
+    String sql = "SELECT * FROM tracks WHERE artist LIKE ? ORDER BY artist, title";
+    
+    try (Connection conn = dbManager.connect();
+         PreparedStatement stmt = conn.prepareStatement(sql)) {
+        
+        stmt.setString(1, "%" + query + "%");
+        try (ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                tracks.add(mapResultSetToTrack(rs));
+                }
+            }
+        }
+        return tracks;
+    }
 
     // Search by BPM range
     public List<Track> searchByBPMRange(double minBPM, double maxBPM) throws SQLException {

@@ -2,6 +2,7 @@ package com.djapp;
 
 import com.djapp.data.DatabaseManager;
 import com.djapp.models.Track;
+import com.djapp.presentation.ConsoleUI;
 import com.djapp.data.TrackDAO;
 import com.djapp.utils.MetadataReader;
 import com.djapp.utils.RekordboxImporter;
@@ -76,35 +77,38 @@ public class DJApp {
 
     // }
 
-    String xmlPath = ConfigLoader.get("rekordbox.xml.path");
-        System.out.println("📂 Reading from: " + xmlPath);
+    // String xmlPath = ConfigLoader.get("rekordbox.xml.path");
+    //     System.out.println("📂 Reading from: " + xmlPath);
         
-        RekordboxImporter importer = new RekordboxImporter();
-        List<Track> tracks = importer.importTracks(xmlPath);
+    //     RekordboxImporter importer = new RekordboxImporter();
+    //     List<Track> tracks = importer.importTracks(xmlPath);
         
-        System.out.println("🎵 Found " + tracks.size() + " tracks in XML.\n");
+    //     System.out.println("🎵 Found " + tracks.size() + " tracks in XML.\n");
         
-        // Show first 3 tracks
-        int preview = Math.min(3, tracks.size());
-        for (int i = 0; i < preview; i++) {
-            Track t = tracks.get(i);
-            System.out.println("  " + t.getArtist() + " - " + t.getTitle());
-            System.out.println("    BPM: " + t.getBpm() + " | Key: " + t.getKey());
-        }
+    //     // Show first 3 tracks
+    //     int preview = Math.min(3, tracks.size());
+    //     for (int i = 0; i < preview; i++) {
+    //         Track t = tracks.get(i);
+    //         System.out.println("  " + t.getArtist() + " - " + t.getTitle());
+    //         System.out.println("    BPM: " + t.getBpm() + " | Key: " + t.getKey());
+    //     }
 
-        // Insert into DB
-        TrackDAO dao = new TrackDAO();
-        int success = 0;
-        for (Track track : tracks) {
-            try {
-                dao.insert(track);
-                success++;
-            } catch (Exception e) {
-                System.err.println("⚠️ Skipped: " + track.getTitle() + " — " + e.getMessage());
-            }
-        }
+    //     // Insert into DB
+    //     TrackDAO dao = new TrackDAO();
+    //     int success = 0;
+    //     for (Track track : tracks) {
+    //         try {
+    //             dao.insert(track);
+    //             success++;
+    //         } catch (Exception e) {
+    //             System.err.println("⚠️ Skipped: " + track.getTitle() + " — " + e.getMessage());
+    //         }
+    //     }
         
-        System.out.println("\n✅ Imported " + success + "/" + tracks.size() + " tracks.");
+    //     System.out.println("\n✅ Imported " + success + "/" + tracks.size() + " tracks.");
+    
+        ConsoleUI ui = new ConsoleUI();
+        ui.start();
     }
 
 }
