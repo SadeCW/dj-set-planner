@@ -15,6 +15,7 @@ import com.djapp.utils.ConfigLoader;
 import java.io.IOException;
 import java.io.File;
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -76,15 +77,76 @@ public class ConsoleUI {
     private void viewLibrary() {
         try {
             List<Track> tracks = trackDAO.getAll();
-            System.out.println("\n📚 Library (" + tracks.size() + " tracks):");
-            System.out.println("─────────────────────────────────────");
             
-            for (Track t : tracks) {
-                System.out.printf("%-30s | %-25s | %s BPM | %s%n",
-                    truncate(t.getTitle(), 30),
-                    truncate(t.getArtist(), 25),
-                    t.getBpm() != null ? t.getBpm() : "?",
-                    t.getKey() != null ? t.getKey() : "?");
+            if (tracks.isEmpty()) {
+                System.out.println("😕 Library is empty.");
+                return;
+            }
+            
+            String currentSort = "Artist, then Title";
+            boolean viewing = true;
+            
+            while (viewing) {
+                System.out.println("\n📚 Library (" + tracks.size() + " tracks) — sorted by: " + currentSort);
+                System.out.println("─────────────────────────────────────");
+                for (Track t : tracks) {
+                    System.out.printf("%-30s | %-25s | %s BPM | %s%n",
+                        truncate(t.getTitle(), 30),
+                        truncate(t.getArtist(), 25),
+                        t.getBpm() != null ? t.getBpm() : "?",
+                        t.getKey() != null ? t.getKey() : "?");
+                }
+                
+                System.out.println("\n🔄 Sort by:");
+                System.out.println("1. Artist, then Title (default)");
+                System.out.println("2. Title");
+                System.out.println("3. BPM (low → high)");
+                System.out.println("4. BPM (high → low)");
+                System.out.println("5. Key");
+                System.out.println("6. Genre");
+                System.out.println("7. Back");
+                
+                int choice = readInt("Choice: ");
+                
+                switch (choice) {
+                    case 1:
+                        tracks.sort(Comparator.comparing(Track::getArtist,
+                            Comparator.nullsLast(String::compareToIgnoreCase))
+                            .thenComparing(Track::getTitle,
+                            Comparator.nullsLast(String::compareToIgnoreCase)));
+                        currentSort = "Artist, then Title";
+                        break;
+                    case 2:
+                        tracks.sort(Comparator.comparing(Track::getTitle,
+                            Comparator.nullsLast(String::compareToIgnoreCase)));
+                        currentSort = "Title";
+                        break;
+                    case 3:
+                        tracks.sort(Comparator.comparing(Track::getBpm,
+                            Comparator.nullsLast(Double::compareTo)));
+                        currentSort = "BPM (low → high)";
+                        break;
+                    case 4:
+                        tracks.sort(Comparator.comparing(Track::getBpm,
+                            Comparator.nullsLast(Double::compareTo)).reversed());
+                        currentSort = "BPM (high → low)";
+                        break;
+                    case 5:
+                        tracks.sort(Comparator.comparing(Track::getKey,
+                            Comparator.nullsLast(String::compareToIgnoreCase)));
+                        currentSort = "Key";
+                        break;
+                    case 6:
+                        tracks.sort(Comparator.comparing(Track::getGenre,
+                            Comparator.nullsLast(String::compareToIgnoreCase)));
+                        currentSort = "Genre";
+                        break;
+                    case 7:
+                        viewing = false;
+                        break;
+                    default:
+                        System.out.println("❌ Invalid choice.");
+                }
             }
         } catch (SQLException e) {
             System.err.println("❌ Error loading library: " + e.getMessage());
@@ -129,6 +191,30 @@ public class ConsoleUI {
             }
 
             displayResults(results);
+            // After showing results, let the user act on one
+            if (!results.isEmpty()) {
+                System.out.println("\n1. View track details");
+                System.out.println("2. Add to a set");
+                System.out.println("3. Delete track");
+                System.out.println("4. Back");
+                
+                int action = readInt("Choice: ");
+                if (action >= 1 && action <= 3) {
+                    int pick = readInt("Enter track number from list above: ");
+                    if (pick < 1 || pick > results.size()) {
+                        System.out.println("❌ Invalid.");
+                        return;
+                    }
+                    Track chosen = results.get(pick - 1);
+                    
+                    switch (action) {
+                        case 1: viewTrackDetails(chosen); break;
+                        case 2: addTrackToSetPrompt(chosen); break;
+                        case 3: deleteTrackById(chosen); break;
+                        case 4: return;
+                    }
+                }
+            }
 
         } catch (SQLException e) {
             System.err.println("❌ Error searching: " + e.getMessage());
@@ -603,6 +689,58 @@ public class ConsoleUI {
             System.out.println("✅ Exported " + setTracks.size() + " tracks to: " + filePath);
         } catch (IOException e) {
             System.err.println("❌ Export failed: " + e.getMessage());
+        }
+    }
+
+    private void viewTrackDetails(Track t) {
+        System.out.println("\n📖 Track Details:");
+        System.out.println("─────────────────────────────────────");
+        System.out.println("ID:       " + t.getId());
+        System.out.println("Title:    " + t.getTitle());
+        System.out.println("Artist:   " + t.getArtist());
+        System.out.println("Album:    " + t.getAlbum());
+        System.out.println("Genre:    " + t.getGenre());
+        System.out.println("Year:     " + t.getYear());
+        System.out.println("BPM:      " + t.getBpm());
+        System.out.println("Key:      " + t.getKey());
+        System.out.println("Duration: " + (t.getDuration() != null ? formatDuration(t.getDuration()) : "?"));
+        System.out.println("Path:     " + t.getFilePath());
+    }
+
+    private void addTrackToSetPrompt(Track track) throws SQLException {
+        List<Set> sets = setDAO.getAll();
+        if (sets.isEmpty()) {
+            System.out.println("😕 No sets yet. Create one first.");
+            return;
+        }
+        
+        System.out.println("\n📋 Pick a set:");
+        for (Set s : sets) {
+            System.out.printf("[%d] %s%n", s.getId(), s.getName());
+        }
+        
+        int setId = readInt("Set ID (0 to cancel): ");
+        if (setId == 0) return;
+        
+        List<SetTrack> existing = setTrackDAO.getBySetId(setId);
+        int nextPos = existing.size() + 1;
+        
+        setTrackDAO.insert(setId, track.getId(), nextPos);
+        System.out.println("✅ Added to set at position " + nextPos);
+    }
+
+    private void deleteTrackById(Track track) throws SQLException {
+        String confirm = readString("⚠️  Delete '" + track.getTitle() + "'? (yes/no): ");
+        if (!confirm.equalsIgnoreCase("yes")) {
+            System.out.println("❌ Cancelled.");
+            return;
+        }
+        
+        boolean deleted = trackDAO.delete(track.getId());
+        if (deleted) {
+            System.out.println("✅ Deleted.");
+        } else {
+            System.out.println("❌ Could not delete. Track may be in a set.");
         }
     }
 

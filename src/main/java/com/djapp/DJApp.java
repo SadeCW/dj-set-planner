@@ -10,7 +10,7 @@ import com.djapp.utils.FileScanner;
 import java.sql.SQLException;
 import java.util.List;
 import java.io.File;
-import com.djapp.utils.ConfigLoader;
+import 1;
 
 public class DJApp {
     public static void main(String[] args) {
